@@ -1,1 +1,36 @@
+# Android build files
 /build
+*/build
+
+# Local configuration file (contains SDK path, etc.)
+local.properties
+
+# IntelliJ & Android Studio project files
+.idea/
+*.iml
+
+# Gradle cache
+.gradle/
+
+# Log & crash reports
+*.log
+crashlytics-build.properties
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# APK/Release outputs
+*.apk
+*.ap_
+
+# Keystore files
+*.jks
+*.keystore
+
+# Firebase Analytics
+/google-services.json
+
+# Misc
+captures/
+output.json
