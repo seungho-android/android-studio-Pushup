@@ -17,7 +17,7 @@
         android:layout_height="match_parent"
         android:background="@android:color/transparent" />
 
-    <!-- 푸쉬업 카운트 + 초기화 버튼 -->
+    <!-- 푸쉬업 카운트 + 리셋 버튼 -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -33,21 +33,33 @@
             android:layout_height="wrap_content"
             android:text="PUSH UPS: 0"
             android:textColor="#FFFFFF"
-            android:textSize="24sp"
-            android:layout_gravity="center_vertical" />
+            android:textSize="24sp" />
 
         <ImageButton
             android:id="@+id/resetButton"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="12dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="8dp"
+            android:background="@android:color/transparent"
             android:src="@android:drawable/ic_menu_rotate"
-            android:contentDescription="리셋"
-            android:tint="#FFFFFF" />
+            android:contentDescription="Reset Counter" />
     </LinearLayout>
 
-    <!-- 피드백 문구 표시 -->
+    <!-- 타이머 표시 -->
+    <TextView
+        android:id="@+id/timerText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="80dp"
+        android:layout_marginEnd="16dp"
+        android:background="#66000000"
+        android:padding="6dp"
+        android:text="남은 시간: 60초"
+        android:textColor="#FFEB3B"
+        android:textSize="18sp" />
+
+    <!-- 피드백 문구 -->
     <TextView
         android:id="@+id/feedbackText"
         android:layout_width="wrap_content"
@@ -57,19 +69,51 @@
         android:textSize="20sp"
         android:background="#88000000"
         android:padding="8dp"
-        android:layout_marginTop="80dp"
+        android:layout_marginTop="120dp"
         android:layout_gravity="top|center_horizontal" />
 
-    <!-- 녹화 버튼 -->
-    <Button
-        android:id="@+id/recordButton"
-        android:layout_width="wrap_content"
+    <!-- 버튼 영역 -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="녹화 시작"
-        android:textColor="#FFFFFF"
-        android:background="@android:color/holo_red_dark"
-        android:padding="10dp"
-        android:layout_marginBottom="40dp"
-        android:layout_gravity="bottom|center_horizontal"
-        android:elevation="6dp" />
+        android:layout_gravity="bottom|center"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingBottom="32dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp">
+
+        <!-- 시작 버튼 -->
+        <Button
+            android:id="@+id/startPushupButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="푸쉬업 시작하기"
+            android:background="@android:color/holo_blue_dark"
+            android:textColor="#FFFFFF"
+            android:padding="10dp"
+            android:layout_marginEnd="10dp" />
+
+        <!-- 종료 버튼 -->
+        <Button
+            android:id="@+id/stopPushupButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="푸쉬업 종료"
+            android:background="@android:color/holo_red_dark"
+            android:textColor="#FFFFFF"
+            android:padding="10dp"
+            android:layout_marginEnd="10dp" />
+
+        <!-- 녹화 버튼 -->
+        <Button
+            android:id="@+id/recordButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="녹화 시작"
+            android:background="@android:color/holo_orange_dark"
+            android:textColor="#FFFFFF"
+            android:padding="10dp" />
+    </LinearLayout>
+
 </FrameLayout>
