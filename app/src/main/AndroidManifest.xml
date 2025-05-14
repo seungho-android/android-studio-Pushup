@@ -32,6 +32,9 @@
             android:exported="false"
             android:foregroundServiceType="mediaProjection"
             android:permission="android.permission.FOREGROUND_SERVICE" />
+        <activity android:name=".LoginActivity" />
+        <activity android:name=".SelectActivity" />
+
 
 
 
