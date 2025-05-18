@@ -58,13 +58,13 @@ class ScreenRecorderService : Service() {
         videoFile = File(getExternalFilesDir(Environment.DIRECTORY_MOVIES), fileName)
 
         mediaRecorder = MediaRecorder().apply {
-            setAudioSource(MediaRecorder.AudioSource.MIC)
+            //setAudioSource(MediaRecorder.AudioSource.MIC)
             setVideoSource(MediaRecorder.VideoSource.SURFACE)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
             setOutputFile(videoFile!!.absolutePath)
             setVideoSize(width, height)
             setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            //setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
             setVideoEncodingBitRate(8 * 1000 * 1000)
             setVideoFrameRate(30)
             prepare()

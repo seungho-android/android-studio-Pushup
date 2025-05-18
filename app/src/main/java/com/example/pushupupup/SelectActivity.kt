@@ -10,16 +10,30 @@ class SelectActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_select)
 
-        val goPushupBtn: Button = findViewById(R.id.goPushupButton)
-        val viewResultBtn: Button = findViewById(R.id.viewResultButton)
+        // LoginActivity → 전달받은 회원 정보
+        val userName = intent.getStringExtra("userName") ?: "unknown"
+        val userId = intent.getStringExtra("userId") ?: ""
+        val userAge = intent.getStringExtra("userAge") ?: ""
 
-        goPushupBtn.setOnClickListener {
-            val intent = Intent(this, CameraActivity::class.java)
-            startActivity(intent)
+        val goPushupButton: Button = findViewById(R.id.goPushupButton)
+        val checkResultButton: Button = findViewById(R.id.checkResultButton)
+
+        // 푸쉬업 하러 가기
+        goPushupButton.setOnClickListener {
+            val pushupIntent = Intent(this, CameraActivity::class.java).apply {
+                putExtra("userName", userName)
+                putExtra("userId", userId)
+                putExtra("userAge", userAge)
+            }
+            startActivity(pushupIntent)
         }
 
-        viewResultBtn.setOnClickListener {
-            // 추후 Firebase 연동 예정
+        // 내 결과 확인하기
+        checkResultButton.setOnClickListener {
+            val resultIntent = Intent(this, ResultActivity::class.java).apply {
+                putExtra("userId", userId) // ✅ userId만 넘기면 충분 (이걸로 Firebase 조회)
+            }
+            startActivity(resultIntent)
         }
     }
 }

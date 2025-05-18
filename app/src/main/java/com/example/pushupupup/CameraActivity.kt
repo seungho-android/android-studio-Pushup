@@ -16,8 +16,9 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.firebase.database.FirebaseDatabase
 import com.google.mediapipe.tasks.vision.core.RunningMode
-import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarkerResult
+import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executors
 import kotlin.math.*
@@ -48,10 +49,13 @@ class CameraActivity : AppCompatActivity(), PoseLandmarkerHelper.LandmarkerListe
 
     private val RECORD_SCREEN_REQUEST_CODE = 1011
 
-    // 상태 변경 지연 프레임 수
     private var downFrameCount = 0
     private var upFrameCount = 0
-    private val requiredFrames = 2  // 연속으로 만족해야 상태 변경
+    private val requiredFrames = 2
+
+    private lateinit var userName: String
+    private lateinit var userId: String
+    private lateinit var userAge: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,11 +71,11 @@ class CameraActivity : AppCompatActivity(), PoseLandmarkerHelper.LandmarkerListe
         stopPushupButton = findViewById(R.id.stopPushupButton)
         timerText = findViewById(R.id.timerText)
 
-        tts = TextToSpeech(this) { status ->
-            if (status != TextToSpeech.ERROR) {
-                tts?.language = Locale.KOREAN
-            }
-        }
+        userName = intent.getStringExtra("userName") ?: "unknown"
+        userId = intent.getStringExtra("userId") ?: "unknown_id"
+        userAge = intent.getStringExtra("userAge") ?: "unknown_age"
+
+        tts = TextToSpeech(this) { if (it != TextToSpeech.ERROR) tts?.language = Locale.KOREAN }
 
         if (allPermissionsGranted()) {
             setupPoseLandmarker()
@@ -107,6 +111,7 @@ class CameraActivity : AppCompatActivity(), PoseLandmarkerHelper.LandmarkerListe
         isCounting = false
         countdownTimer?.cancel()
         timerText.text = "타이머 종료됨"
+        savePushupResultAndNavigate()
     }
 
     private fun startTimer() {
@@ -120,6 +125,7 @@ class CameraActivity : AppCompatActivity(), PoseLandmarkerHelper.LandmarkerListe
                 isCounting = false
                 timerText.text = "타이머 종료됨"
                 speak("1분이 지났습니다. 푸쉬업을 종료하세요.")
+                savePushupResultAndNavigate()
             }
         }.start()
     }
@@ -137,13 +143,42 @@ class CameraActivity : AppCompatActivity(), PoseLandmarkerHelper.LandmarkerListe
         }
     }
 
+    private fun savePushupResultAndNavigate() {
+        val now = Calendar.getInstance().time
+        val dateFormat = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
+        val timeFormat = SimpleDateFormat("HHmmss", Locale.getDefault())
+        val dateKey = dateFormat.format(now)
+        val timeKey = timeFormat.format(now)
+
+        val resultData = mapOf("name" to userName, "age" to userAge, "count" to pushupCount)
+        val db = FirebaseDatabase.getInstance().reference
+        val path = "pushup_records/$userId/$dateKey/$timeKey"
+        Log.d("FirebasePath", "경로: $path / 데이터: $resultData")
+
+        db.child("pushup_records").child(userId).child(dateKey).child(timeKey)
+            .setValue(resultData)
+            .addOnSuccessListener {
+                Log.d("FirebaseSave", "저장 성공")
+                Toast.makeText(this, "운동 결과 저장 완료", Toast.LENGTH_SHORT).show()
+                val intent = Intent(this, ResultActivity::class.java).apply {
+                    putExtra("userName", userName)
+                    putExtra("userId", userId)
+                }
+                startActivity(intent)
+                finish()
+            }
+            .addOnFailureListener {
+                Log.e("FirebaseSave", "저장 실패: ${it.message}")
+                Toast.makeText(this, "저장 실패: ${it.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
     private fun speak(text: String) {
         tts?.speak(text, TextToSpeech.QUEUE_ADD, null, null)
     }
 
     private fun allPermissionsGranted() =
-        ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) ==
-                PackageManager.PERMISSION_GRANTED
+        ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
 
     private fun setupPoseLandmarker() {
         poseLandmarkerHelper = PoseLandmarkerHelper(
@@ -165,18 +200,13 @@ class CameraActivity : AppCompatActivity(), PoseLandmarkerHelper.LandmarkerListe
             imageAnalyzer = ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
-                .build()
-                .also {
+                .build().also {
                     it.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
                         poseLandmarkerHelper.detectLiveStream(imageProxy, isFrontCamera)
                     }
                 }
-            try {
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalyzer)
-            } catch (e: Exception) {
-                Log.e("Camera", "Camera binding failed", e)
-            }
+            cameraProvider.unbindAll()
+            cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalyzer)
         }, ContextCompat.getMainExecutor(this))
     }
 
@@ -198,33 +228,24 @@ class CameraActivity : AppCompatActivity(), PoseLandmarkerHelper.LandmarkerListe
             val minAngle = min(leftAngle, rightAngle)
 
             if (isCounting) {
-                if (previousState == "UP") {
-                    if (minAngle <= 105) {
-                        downFrameCount++
-                        if (downFrameCount >= requiredFrames) {
-                            previousState = "DOWN"
-                            downFrameCount = 0
-                        }
-                    } else {
+                if (previousState == "UP" && minAngle <= 105) {
+                    downFrameCount++
+                    if (downFrameCount >= requiredFrames) {
+                        previousState = "DOWN"
                         downFrameCount = 0
                     }
-                } else if (previousState == "DOWN") {
-                    if (minAngle >= 160) {
-                        upFrameCount++
-                        if (upFrameCount >= requiredFrames) {
-                            previousState = "UP"
-                            upFrameCount = 0
-                            pushupCount++
-                            pushupText.text = "PUSH UPS: $pushupCount"
-                        }
-                    } else {
+                } else if (previousState == "DOWN" && minAngle >= 160) {
+                    upFrameCount++
+                    if (upFrameCount >= requiredFrames) {
+                        previousState = "UP"
                         upFrameCount = 0
+                        pushupCount++
+                        pushupText.text = "PUSH UPS: $pushupCount"
                     }
                 }
             }
 
             feedbackText.text = if (minAngle < 120) "정자세입니다!" else "더 낮게 내려가세요!"
-
             overlayView.setResults(result, resultBundle.inputImageHeight, resultBundle.inputImageWidth, RunningMode.LIVE_STREAM)
             overlayView.invalidate()
         }
@@ -239,14 +260,44 @@ class CameraActivity : AppCompatActivity(), PoseLandmarkerHelper.LandmarkerListe
         return Math.toDegrees(acos((dotProduct / (magnitudeAB * magnitudeCB)).coerceIn(-1.0f, 1.0f).toDouble()))
     }
 
+    private fun startScreenRecording() {
+        val projectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        val captureIntent = projectionManager.createScreenCaptureIntent()
+        startActivityForResult(captureIntent, RECORD_SCREEN_REQUEST_CODE)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == RECORD_SCREEN_REQUEST_CODE && resultCode == Activity.RESULT_OK && data != null) {
+            val serviceIntent = Intent(this, ScreenRecorderService::class.java).apply {
+                putExtra("resultCode", resultCode)
+                putExtra("data", data)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent)
+            } else {
+                startService(serviceIntent)
+            }
+            isRecording = true
+            recordButton.text = "녹화 중지"
+            Toast.makeText(this, "녹화 시작됨", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun stopScreenRecording() {
+        stopService(Intent(this, ScreenRecorderService::class.java))
+        isRecording = false
+        recordButton.text = "녹화 시작"
+        Toast.makeText(this, "녹화 저장됨", Toast.LENGTH_SHORT).show()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         tts?.shutdown()
         countdownTimer?.cancel()
     }
 
-    private fun startScreenRecording() { /* 생략 */ }
-    private fun stopScreenRecording() { /* 생략 */ }
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) { /* 생략 */ }
-    override fun onError(error: String, errorCode: Int) { Log.e("Pose", "에러 발생: $error ($errorCode)") }
+    override fun onError(error: String, errorCode: Int) {
+        Log.e("Pose", "에러 발생: $error ($errorCode)")
+    }
 }

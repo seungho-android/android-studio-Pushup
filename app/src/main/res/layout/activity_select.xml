@@ -18,11 +18,9 @@
         android:layout_marginBottom="24dp" />
 
     <Button
-        android:id="@+id/viewResultButton"
-        android:layout_width="match_parent"
+        android:id="@+id/checkResultButton"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="내 결과 확인하기"
-        android:textColor="#FFFFFF"
-        android:background="@android:color/darker_gray"
-        android:padding="16dp" />
+        android:text="내 결과 확인하기" />
+
 </LinearLayout>
