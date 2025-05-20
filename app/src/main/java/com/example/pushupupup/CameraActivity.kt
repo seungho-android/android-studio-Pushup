@@ -247,7 +247,7 @@ class CameraActivity : AppCompatActivity(), PoseLandmarkerHelper.LandmarkerListe
                         previousState = "DOWN"
                         downFrameCount = 0
                     }
-                } else if (previousState == "DOWN" && minAngle >= 160) {
+                } else if (previousState == "DOWN" && minAngle >= 155) {
                     upFrameCount++
                     if (upFrameCount >= requiredFrames) {
                         previousState = "UP"
