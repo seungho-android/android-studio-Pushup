@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
             AlertDialog.Builder(this)
                 .setTitle("앱 사용법")
                 .setMessage("""
-                    1. 정보를 입력하고 로그인합니다.
+                    1. 회원가입 후 로그인 합니다.
                     2. '푸쉬업 하러가기'를 누릅니다.
                     3. '녹화 시작' 버튼을 눌러 녹화를 시작합니다.
                     4. '푸쉬업 시작하기'를 눌러 음성 안내에 따라 운동을 시작합니다.

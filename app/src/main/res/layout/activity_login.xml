@@ -14,26 +14,6 @@
         android:textSize="24sp"
         android:layout_marginBottom="16dp" />
 
-    <EditText
-        android:id="@+id/nameInput"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="이름"
-        android:textColorHint="#AAAAAA"
-        android:textColor="#FFFFFF"
-        android:backgroundTint="#FFFFFF"
-        android:layout_marginBottom="12dp" />
-
-    <EditText
-        android:id="@+id/ageInput"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="나이"
-        android:inputType="number"
-        android:textColorHint="#AAAAAA"
-        android:textColor="#FFFFFF"
-        android:backgroundTint="#FFFFFF"
-        android:layout_marginBottom="12dp" />
 
     <EditText
         android:id="@+id/idInput"
@@ -63,4 +43,11 @@
         android:text="로그인"
         android:backgroundTint="#03DAC5"
         android:textColor="#000000" />
+    <Button
+        android:id="@+id/signupButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="회원가입"
+        android:layout_marginTop="12dp"/>
+
 </LinearLayout>
