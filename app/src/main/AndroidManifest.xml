@@ -17,6 +17,7 @@
 
 
     <application
+        android:name=".MyApplication"
         android:requestLegacyExternalStorage="true"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -38,6 +39,7 @@
 
 
 
+        <activity android:name=".GraphActivity" />
 
         <activity android:name=".CameraActivity" />
         <activity

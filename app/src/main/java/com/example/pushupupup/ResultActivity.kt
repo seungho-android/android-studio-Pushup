@@ -1,67 +1,83 @@
 package com.example.pushupupup
 
 import android.os.Bundle
-import android.widget.TextView
+import android.util.Log
+import android.widget.Button
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.google.firebase.database.*
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.firestore.FirebaseFirestore
+import java.text.SimpleDateFormat
+import java.util.*
 
 class ResultActivity : AppCompatActivity() {
 
-    private lateinit var resultTextView: TextView
-    private lateinit var database: DatabaseReference
-    private var userId: String? = null
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var adapter: RecordAdapter
+    private val records = mutableListOf<PushupRecord>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_result)
 
-        resultTextView = findViewById(R.id.resultTextView)
-        userId = intent.getStringExtra("userId")
+        recyclerView = findViewById(R.id.resultRecyclerView)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        adapter = RecordAdapter(records)
+        recyclerView.adapter = adapter
 
-        if (userId == null) {
-            resultTextView.text = "사용자 정보를 불러올 수 없습니다."
-            return
+        val passedUserId = intent.getStringExtra("userId") ?: return
+
+        findViewById<Button>(R.id.graphButton).setOnClickListener {
+            val intent = android.content.Intent(this, GraphActivity::class.java)
+            intent.putExtra("userId", passedUserId)
+            startActivity(intent)
         }
 
-        database = FirebaseDatabase.getInstance().reference
-        loadPushupData()
+        loadPushupData(passedUserId)
     }
 
-    private fun loadPushupData() {
-        val userRef = database.child("pushup_records").child(userId!!)
+    private fun loadPushupData(userId: String) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users")
+            .document(userId)
+            .collection("records")
+            .get()
+            .addOnSuccessListener { result ->
+                records.clear()
+                val inputFormatDate = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
+                val outputFormatDate = SimpleDateFormat("yyyy년 M월 d일", Locale.getDefault())
+                val inputFormatTime = SimpleDateFormat("HHmmss", Locale.getDefault())
+                val outputFormatTime = SimpleDateFormat("HH:mm", Locale.getDefault())
 
-        userRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                if (!snapshot.exists()) {
-                    resultTextView.text = "운동 기록이 없습니다."
-                    return
-                }
+                for (doc in result) {
+                    val name = doc.getString("name") ?: continue
+                    val age = doc.getString("age") ?: "?"
+                    val count = doc.getLong("count")?.toInt() ?: 0
+                    val dateRaw = doc.getString("date") ?: ""
+                    val timeRaw = doc.getString("time") ?: ""
 
-                val builder = StringBuilder()
-                val sortedDates = snapshot.children.sortedBy { it.key }
-
-                for (dateSnapshot in sortedDates) {
-                    val date = dateSnapshot.key ?: continue
-                    val sortedTimes = dateSnapshot.children.sortedBy { it.key }
-
-                    for (timeSnapshot in sortedTimes) {
-                        val time = timeSnapshot.key ?: continue
-                        val count = timeSnapshot.child("count").getValue(Int::class.java) ?: 0
-                        val name = timeSnapshot.child("name").getValue(String::class.java) ?: ""
-                        val age = timeSnapshot.child("age").getValue(String::class.java) ?: ""
-
-                        builder.append("날짜: $date $time\n")
-                        builder.append("이름: $name, 나이: $age\n")
-                        builder.append("푸쉬업 개수: ${count}개\n\n")
+                    val formattedDate = try {
+                        outputFormatDate.format(inputFormatDate.parse(dateRaw)!!)
+                    } catch (e: Exception) {
+                        dateRaw
                     }
+
+                    val formattedTime = try {
+                        outputFormatTime.format(inputFormatTime.parse(timeRaw)!!)
+                    } catch (e: Exception) {
+                        timeRaw
+                    }
+
+                    val dateTime = "$formattedDate $formattedTime"
+                    records.add(PushupRecord(dateTime, name, age, count))
                 }
-
-                resultTextView.text = builder.toString()
+                records.sortByDescending { it.dateTime }
+                adapter.notifyDataSetChanged()
             }
-
-            override fun onCancelled(error: DatabaseError) {
-                resultTextView.text = "데이터 로딩 실패: ${error.message}"
+            .addOnFailureListener { e ->
+                Log.e("ResultActivity", "데이터 로딩 실패: ${e.message}", e)
+                Toast.makeText(this, "기록을 불러오지 못했습니다", Toast.LENGTH_LONG).show()
             }
-        })
     }
 }

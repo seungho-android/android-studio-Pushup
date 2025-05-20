@@ -17,18 +17,22 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="16dp" />
 
-    <ScrollView
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/resultRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="#1E1E1E">
+        android:scrollbars="vertical" />
+    <Button
+        android:id="@+id/graphButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="📊"
+        android:textSize="12sp"
+        android:layout_gravity="end"
+        android:backgroundTint="#333333"
+        android:textColor="#FFFFFF"
+        android:padding="6dp"
+        android:layout_marginBottom="8dp" />
 
-        <TextView
-            android:id="@+id/resultTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:padding="8dp" />
-    </ScrollView>
 </LinearLayout>

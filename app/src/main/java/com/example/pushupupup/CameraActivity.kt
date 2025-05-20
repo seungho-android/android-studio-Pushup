@@ -16,7 +16,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import java.text.SimpleDateFormat
 import java.util.*
@@ -48,7 +48,6 @@ class CameraActivity : AppCompatActivity(), PoseLandmarkerHelper.LandmarkerListe
     private var countdownTimer: CountDownTimer? = null
 
     private val RECORD_SCREEN_REQUEST_CODE = 1011
-
     private var downFrameCount = 0
     private var upFrameCount = 0
     private val requiredFrames = 2
@@ -144,22 +143,35 @@ class CameraActivity : AppCompatActivity(), PoseLandmarkerHelper.LandmarkerListe
     }
 
     private fun savePushupResultAndNavigate() {
+        if (pushupCount == 0) {
+            Toast.makeText(this, "기록할 푸쉬업이 없습니다.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val now = Calendar.getInstance().time
         val dateFormat = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
         val timeFormat = SimpleDateFormat("HHmmss", Locale.getDefault())
         val dateKey = dateFormat.format(now)
         val timeKey = timeFormat.format(now)
+        val recordId = "${dateKey}_$timeKey"
 
-        val resultData = mapOf("name" to userName, "age" to userAge, "count" to pushupCount)
-        val db = FirebaseDatabase.getInstance().reference
-        val path = "pushup_records/$userId/$dateKey/$timeKey"
-        Log.d("FirebasePath", "경로: $path / 데이터: $resultData")
+        val data = hashMapOf(
+            "name" to userName,
+            "age" to userAge,
+            "count" to pushupCount,
+            "date" to dateKey,
+            "time" to timeKey
+        )
 
-        db.child("pushup_records").child(userId).child(dateKey).child(timeKey)
-            .setValue(resultData)
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users")
+            .document(userId)
+            .collection("records")
+            .document(recordId)
+            .set(data)
             .addOnSuccessListener {
-                Log.d("FirebaseSave", "저장 성공")
-                Toast.makeText(this, "운동 결과 저장 완료", Toast.LENGTH_SHORT).show()
+                Log.d("FirestoreSave", "✅ 저장 성공")
+                pushupCount = 0
                 val intent = Intent(this, ResultActivity::class.java).apply {
                     putExtra("userName", userName)
                     putExtra("userId", userId)
@@ -167,14 +179,15 @@ class CameraActivity : AppCompatActivity(), PoseLandmarkerHelper.LandmarkerListe
                 startActivity(intent)
                 finish()
             }
-            .addOnFailureListener {
-                Log.e("FirebaseSave", "저장 실패: ${it.message}")
-                Toast.makeText(this, "저장 실패: ${it.message}", Toast.LENGTH_SHORT).show()
+            .addOnFailureListener { e ->
+                Log.e("FirestoreSave", "❌ 저장 실패: ${e.message}", e)
+                Toast.makeText(this, "저장 실패: ${e.message}", Toast.LENGTH_LONG).show()
             }
     }
 
     private fun speak(text: String) {
-        tts?.speak(text, TextToSpeech.QUEUE_ADD, null, null)
+        tts?.stop()
+        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
     }
 
     private fun allPermissionsGranted() =

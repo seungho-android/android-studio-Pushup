@@ -50,8 +50,14 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:33.13.0")) // 🔥 BOM
     implementation("com.google.firebase:firebase-analytics")
-    implementation(platform("com.google.firebase:firebase-bom:33.13.0"))
+
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
 
     // 테스트
     testImplementation(libs.junit)
@@ -62,9 +68,6 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
-    // Firebase (중복 제거)
-    implementation("com.google.firebase:firebase-database-ktx:20.3.1")
-    implementation("com.google.firebase:firebase-database-ktx")
     // MediaPipe
     implementation("com.google.mediapipe:tasks-vision:0.10.14")
 
